@@ -1,0 +1,12 @@
+target/
+.idea/
+*.iml
+.vscode/
+*.key
+*.p12
+*.pem
+*.log
+.env
+# Local identities must never enter source control.
+*.vckey
+vaultcheck-keys-*/
