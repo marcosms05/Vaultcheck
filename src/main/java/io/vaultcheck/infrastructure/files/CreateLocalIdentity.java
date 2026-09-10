@@ -20,9 +20,7 @@ public final class CreateLocalIdentity {
                 var directory = WindowsPrivateDirectory.create(parent);
                 try (var privateLease = WindowsHandleFingerprintReader.retainDirectory(directory)) {
                     // Persistence begins here. Completion reports saved files even if cancellation arrives later.
-                    var pub = directory.resolve("public.der");
-                    Files.write(pub, pair.getPublic().getEncoded(), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
-                    WindowsPrivateDirectory.requirePrivateFile(pub);
+                    var pub = WindowsPrivateDirectory.createPublicKeyFile(directory, pair.getPublic().getEncoded());
                     var encrypted = new EncryptedKeyFiles(new EncryptedSigningKeyCodec()).create(directory, privateKey, password);
                     return new Created(directory, encrypted, pub, PinnedSigners.fingerprint(pair.getPublic()));
                 }

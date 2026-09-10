@@ -23,7 +23,7 @@ public final class EncryptedKeyFiles {
         byte[] ciphertext = codec.protect(key, password);
         Path directory = checkedDirectory(applicationDirectory);
         Path published = directory.resolve(UUID.randomUUID() + ".vckey");
-        Path staged = Files.createTempFile(directory, ".pending-", ".vckey");
+        Path staged = WindowsPrivateDirectory.createPendingKeyFile(directory);
         boolean linked = false;
         try {
             WindowsPrivateDirectory.requirePrivateFile(staged);

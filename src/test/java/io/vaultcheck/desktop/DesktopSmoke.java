@@ -21,6 +21,7 @@ public final class DesktopSmoke {
                 Stage stage = new Stage();
                 try {
                     app.start(stage);
+                    if (stage.getIcons().size() != 1 || stage.getIcons().getFirst().isError()) throw new AssertionError("Application icon missing or invalid");
                     var root = stage.getScene().getRoot();
                     var table = (TableView<?>) root.lookup(".table-view");
                     if (((javafx.scene.control.SplitPane)root.lookup(".split-pane")).getItems().size() != 1) throw new AssertionError("Inspector should start hidden");

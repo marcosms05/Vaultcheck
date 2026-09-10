@@ -29,6 +29,7 @@ try {
         '--input', $staging, '--main-jar', 'vaultcheck.jar',
         '--main-class', 'org.springframework.boot.loader.launch.JarLauncher',
         '--arguments', '--vaultcheck.ui=true', '--dest', $Destination,
+        '--icon', (Join-Path $projectRoot 'src/main/resources/brand/app-icon.ico'),
         '--add-modules', 'ALL-MODULE-PATH',
         '--jlink-options', '--strip-debug --no-man-pages --no-header-files --compress=2',
         '--description', 'Local file integrity verification - development preview')

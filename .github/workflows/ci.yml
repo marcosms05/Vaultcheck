@@ -6,9 +6,19 @@ jobs:
   verify:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: '21'
       - run: .\mvnw.cmd --batch-mode --no-transfer-progress verify
+      - name: Test summary
+        if: always()
+        shell: pwsh
+        run: |
+          '## JUnit results' | Add-Content $env:GITHUB_STEP_SUMMARY
+          Get-ChildItem target/surefire-reports/TEST-*.xml -ErrorAction SilentlyContinue | ForEach-Object {
+            [xml]$report = Get-Content $_.FullName -Raw
+            $suite = $report.testsuite
+            "$($suite.name): tests=$($suite.tests), failures=$($suite.failures), errors=$($suite.errors), skipped=$($suite.skipped)" | Add-Content $env:GITHUB_STEP_SUMMARY
+          }

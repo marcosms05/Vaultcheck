@@ -144,3 +144,11 @@ Maven verify satisfactorio después de ajustar tabla, estados con texto y punto 
 Validación del 9–10 de septiembre de 2026: Maven verify y cinco recorridos gráficos superados con Temurin 21.0.12.1+1 para Windows x64. Descarga oficial contrastada con SHA-256 f9d6e191ab098c0d416e7d588a24420a8621cd2f4720dab2459b8b7b2d2d8b4e. Se comprobaron escalas JavaFX forzadas al 100 %, 125 %, 150 % y 200 %, además de contenido desplazable en ventana pequeña e inspector vertical cuando falta anchura. Esto no cambia el escalado del sistema y no sustituye pruebas de DPI por monitor ni selectores nativos en el portátil.
 
 La barra lateral puede ocultarse con Ver → Mostrar barra lateral o Ctrl+B. La ventana inicial se limita al área útil de la pantalla y el contenido conserva desplazamiento vertical. README actualizado a las capacidades reales. El paquete incorpora inventario de JARs y avisos embebidos; las dependencias sin aviso embebido siguen requiriendo revisión antes de distribuir el binario públicamente.
+
+## Corrección de propiedad en Windows administrativo
+
+El primer CI público ejecutó 137 pruebas y produjo ocho errores «Storage is not owned by current user». Los fallos estaban en la creación del almacén privado. Windows puede asignar como propietario predeterminado un grupo del token administrativo. VaultCheck ahora fija el usuario propietario únicamente tras crear exclusivamente una carpeta/archivo nuevo y antes de persistir sus datos. Mantiene la validación estricta y no repara permisos de almacenes existentes. Las referencias a rutas siguen teniendo los límites de concurrencia documentados; este cambio no los elimina.
+
+Validación local con Temurin 21: 139 pruebas satisfactorias. Nuevas comprobaciones: el padre conserva propietario/ACL y la creación de clave pública no sobrescribe contenido existente. Falta confirmar el resultado en el runner remoto administrativo. Las acciones de checkout y setup-java se actualizaron a versiones basadas en Node 24, fijadas por SHA de commit. El resumen de JUnit se publica en el resumen del trabajo.
+
+Fuente del comportamiento del propietario: https://learn.microsoft.com/en-us/windows/win32/secauthz/owner-of-a-new-object

@@ -40,6 +40,7 @@ public final class DesktopApplication extends Application {
     }
     @Override public void start(Stage stage) {
         stage.setTitle("VaultCheck · Vista previa");
+        stage.getIcons().add(new Image(DesktopApplication.class.getResource("/brand/app-icon.png").toExternalForm()));
         var root = new BorderPane();
         var menu = new MenuBar();
         var file = new Menu("Archivo");

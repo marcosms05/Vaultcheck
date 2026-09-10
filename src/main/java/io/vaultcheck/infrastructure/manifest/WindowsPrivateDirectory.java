@@ -24,9 +24,43 @@ public final class WindowsPrivateDirectory {
             @Override public List<AclEntry> value() { return List.of(rule); }
         };
         Path directory = Files.createTempDirectory(applicationParent, "vaultcheck-keys-", attribute);
+        setCreatedOwner(directory, user);
         // No secrets are written before checking effective ACLs. No weaker-permission fallback.
         requirePrivate(directory);
         return directory;
+    }
+
+    static Path createPendingKeyFile(Path directory) throws IOException {
+        Path file = Files.createTempFile(directory, ".pending-", ".vckey");
+        try {
+            setCreatedOwner(file, currentUser());
+            requirePrivateFile(file);
+            return file;
+        } catch (IOException failure) {
+            try { Files.deleteIfExists(file); } catch (IOException cleanup) { failure.addSuppressed(cleanup); }
+            throw failure;
+        }
+    }
+
+    public static Path createPublicKeyFile(Path directory, byte[] encoded) throws IOException {
+        requirePrivate(directory);
+        Path file = directory.resolve("public.der");
+        try (var channel = java.nio.channels.FileChannel.open(file, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
+            setCreatedOwner(file, currentUser());
+            requirePrivateFile(file);
+            var buffer = java.nio.ByteBuffer.wrap(encoded);
+            while (buffer.hasRemaining()) channel.write(buffer);
+            channel.force(true);
+        }
+        return file;
+    }
+
+    // Used only immediately after exclusive creation. Existing storage is validated, never repaired.
+    // Administrative Windows tokens can default new objects to the Administrators group.
+    private static void setCreatedOwner(Path path, UserPrincipal user) throws IOException {
+        var view = Files.getFileAttributeView(path, AclFileAttributeView.class, LinkOption.NOFOLLOW_LINKS);
+        if (view == null) throw new IOException("Windows ACLs required");
+        if (!view.getOwner().equals(user)) view.setOwner(user);
     }
 
     public static void requirePrivate(Path directory) throws IOException {
