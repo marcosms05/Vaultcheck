@@ -21,6 +21,7 @@ public final class DesktopSmoke {
                 Stage stage = new Stage();
                 try {
                     app.start(stage);
+                    System.out.println("NATIVE DARK CAPTION APPLIED: " + WindowsWindowTheme.apply(stage.getTitle()));
                     if (stage.getIcons().size() != 1 || stage.getIcons().getFirst().isError()) throw new AssertionError("Application icon missing or invalid");
                     var root = stage.getScene().getRoot();
                     var table = (TableView<?>) root.lookup(".table-view");

@@ -54,6 +54,12 @@ public final class DesktopReferenceSmoke {
                                 if (button(panel, "Aprobar identidad…").isDisabled()) throw new AssertionError("Review failed");
                                 button(panel, "Aprobar identidad…").fire();
                                 if (!button(panel, "Verificar referencia").isDisabled()) throw new AssertionError("Wrong fingerprint accepted");
+                                panel.useLocalIdentity("0".repeat(64));
+                                if (!button(panel, "Usar mi identidad de esta sesión").isDisabled()) throw new AssertionError("Unrelated local identity accepted");
+                                panel.useLocalIdentity(fingerprint);
+                                if (!button(panel, "Verificar referencia").isDisabled()) throw new AssertionError("Local identity silently approved");
+                                button(panel, "Usar mi identidad de esta sesión").fire();
+                                if (button(panel, "Verificar referencia").isDisabled()) throw new AssertionError("Matching local identity rejected");
                                 button(panel, "Aprobar identidad…").fire();
                                 if (button(panel, "Verificar referencia").isDisabled()) throw new AssertionError("Correct fingerprint rejected");
                                 bytes[bytes.length - 1] ^= 1; Files.write(ref, bytes);
@@ -63,6 +69,7 @@ public final class DesktopReferenceSmoke {
                                     throw new AssertionError("Reviewed bytes were not retained");
                                 button(panel, "Elegir clave pública").fire();
                                 if (!button(panel, "Verificar referencia").isDisabled()) throw new AssertionError("Key reselection retained trust");
+                                if (!button(panel, "Usar mi identidad de esta sesión").isDisabled()) throw new AssertionError("Local approval enabled before signature review");
                                 phase.set(2); button(panel, "Revisar firma").fire();
                             } else {
                                 if (!button(panel, "Aprobar identidad…").isDisabled() || !button(panel, "Verificar referencia").isDisabled())

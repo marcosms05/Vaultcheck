@@ -156,3 +156,7 @@ Fuente del comportamiento del propietario: https://learn.microsoft.com/en-us/win
 ## Fixture de archivo truncado en el CI
 
 Tras corregir la propiedad en producción, el CI pasó de ocho errores a un fallo en truncatedPublishedFileNeverUnlocks: el test fabricaba el archivo mediante Files.write, con propietario administrativo predeterminado. Se corrige el fixture publicando primero una clave válida mediante el flujo real, comprobando su recuperación y truncando ese mismo archivo sin sustituirlo. Se comprueban sus permisos antes de exigir el rechazo criptográfico. La prueba de tamaño excesivo también conserva un archivo publicado con permisos válidos, evitando que un rechazo por propietario enmascare la comprobación de tamaño. No se amplían las excepciones aceptadas ni se cambia el código de producción.
+
+## Huellas copiables y aprobación de identidad local
+
+139 pruebas locales superadas y recorridos DesktopSmoke, DesktopReferenceSmoke y DesktopCreationSmoke satisfactorios. La prueba de referencia cubre identidad local distinta, coincidencia local sin aprobación silenciosa, aprobación explícita e invalidación al cambiar la selección. Las huellas son seleccionables y copiables; ninguna acción de copia aprueba identidades. La barra nativa usa DWM y se confirmó el resultado satisfactorio de la solicitud de color en Windows de la torre; conserva el marco del sistema si no está soportado o si detecta alto contraste. La apariencia en el portátil y los cambios de tema durante la sesión aún requieren comprobación manual.

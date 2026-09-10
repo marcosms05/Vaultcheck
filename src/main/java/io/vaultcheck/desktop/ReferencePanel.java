@@ -21,6 +21,16 @@ final class ReferencePanel extends VBox {
     private final Button review = new Button("Revisar firma");
     private final Button approve = new Button("Aprobar identidad…");
     private final Button verify = new Button("Verificar referencia");
+    private final FingerprintView fingerprint = new FingerprintView("Huella de la clave importada; copiar no implica confiar");
+    private final Button approveLocal = new Button("Usar mi identidad de esta sesión");
+    private String localFingerprint;
+    void useLocalIdentity(String fingerprint) {
+        localFingerprint = java.util.Objects.requireNonNull(fingerprint);
+        updateLocalApproval();
+    }
+    private void updateLocalApproval() {
+        approveLocal.setDisable(reviewed == null || !reviewed.fingerprint().equals(localFingerprint));
+    }
 
     ReferencePanel(Stage owner, Supplier<Path> folder, Consumer<CooperativeTask<?>> submit,
                    Runnable finished, Consumer<VerifyFolder.Result> results, Consumer<String> message) {
@@ -35,7 +45,11 @@ final class ReferencePanel extends VBox {
         var chooseReference = new Button("Elegir referencia");
         var chooseKey = new Button("Elegir clave pública");
         getChildren().addAll(line(reference, chooseReference), line(key, chooseKey),
-                new FlowPane(10, 8, review, approve, verify), status);
+                new FlowPane(10, 8, review, approve, approveLocal, verify), status, fingerprint);
+        approveLocal.setDisable(true);
+        approveLocal.setOnAction(event -> {
+            if (reviewed != null && reviewed.fingerprint().equals(localFingerprint)) approveFingerprint(localFingerprint);
+        });
         review.setDisable(true); approve.setDisable(true); verify.setDisable(true);
         chooseReference.setOnAction(e -> {
             var selected = chooseFile.apply("Elegir referencia firmada", "*.vcm");
@@ -47,6 +61,8 @@ final class ReferencePanel extends VBox {
         });
         review.setOnAction(e -> {
             reviewed = null; approved = null; approve.setDisable(true); verify.setDisable(true);
+            fingerprint.setFingerprint("");
+            updateLocalApproval();
             var selectedReference = referencePath; var selectedKey = keyPath;
             status.setText("Revisando firma… La identidad todavía no está aprobada.");
             var task = new CooperativeTask<ReferenceReview>() {
@@ -61,8 +77,10 @@ final class ReferencePanel extends VBox {
                 if (task.cancellationRequested()) status.setText("Revisión cancelada. Identidad no aprobada.");
                 else {
                     reviewed = task.getValue(); approve.setDisable(false);
-                    status.setText("Firma válida con la clave importada · IDENTIDAD NO APROBADA\nSHA-256: "
-                            + reviewed.fingerprint() + "\nEntradas: " + reviewed.entries() + " · Omisiones: " + reviewed.omissions());
+                    fingerprint.setFingerprint(reviewed.fingerprint());
+                    updateLocalApproval();
+                    status.setText("Firma válida con la clave importada · IDENTIDAD NO APROBADA"
+                            + "\nEntradas: " + reviewed.entries() + " · Omisiones: " + reviewed.omissions());
                 }
                 message.accept(status.getText()); finished.run();
             });
@@ -71,15 +89,7 @@ final class ReferencePanel extends VBox {
         });
         approve.setOnAction(e -> {
             if (reviewed == null) return;
-            confirmIdentity.get().ifPresent(confirmed -> {
-                try {
-                    approved = reviewed.approve(confirmed); verify.setDisable(false);
-                    status.setText("Identidad aprobada solo para esta selección · SHA-256: " + reviewed.fingerprint()
-                            + "\nLa carpeta todavía no se ha comparado.");
-                } catch (java.security.GeneralSecurityException error) {
-                    approved = null; verify.setDisable(true); status.setText("La huella no coincide. Identidad no aprobada.");
-                }
-            });
+            confirmIdentity.get().ifPresent(this::approveFingerprint);
         });
         verify.setOnAction(e -> {
             var selectedFolder = folder.get();
@@ -101,15 +111,28 @@ final class ReferencePanel extends VBox {
             submit.accept(task);
         });
     }
+    private void approveFingerprint(String expected) {
+        try {
+            approved = reviewed.approve(expected); verify.setDisable(false);
+            status.setText("Identidad aprobada solo para esta selección"
+                    + "\nLa carpeta todavía no se ha comparado.");
+        } catch (java.security.GeneralSecurityException error) {
+            approved = null; verify.setDisable(true); status.setText("La huella no coincide. Identidad no aprobada.");
+        }
+    }
     private static java.util.Optional<String> confirm(Stage owner) {
         var dialog = new TextInputDialog(); dialog.initOwner(owner);
         dialog.setTitle("Aprobar identidad para esta selección");
         dialog.setHeaderText("Comprueba la huella por un canal independiente");
-        dialog.setContentText("Introduce los 64 caracteres SHA-256 confirmados con el propietario.\nNo basta copiar la huella del archivo importado:");
+        dialog.setContentText("Pega la huella SHA-256 obtenida del propietario por un canal independiente\n(o conservada al crear tu identidad). Copiar la de la clave importada\nno demuestra su origen. No necesitas transcribirla a mano:");
+        dialog.getEditor().setPromptText("Pegar huella esperada · 64 caracteres hexadecimales");
+        dialog.getDialogPane().setPrefWidth(600);
         return dialog.showAndWait();
     }
     private void reset() {
         reviewed = null; approved = null; approve.setDisable(true); verify.setDisable(true);
+        fingerprint.setFingerprint("");
+        updateLocalApproval();
         review.setDisable(referencePath == null || keyPath == null);
         status.setText("Selección cambiada. Firma pendiente de revisión; identidad no aprobada."); message.accept("Selección cambiada: resultados anteriores descartados. Revisa la firma y la identidad.");
     }

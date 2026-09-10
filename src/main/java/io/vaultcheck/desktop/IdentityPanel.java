@@ -19,9 +19,11 @@ final class IdentityPanel extends VBox {
         super(10);
         var status = new Label("Crea una identidad Ed25519 local. La clave privada se guardará cifrada en una carpeta nueva con acceso limitado a tu usuario."); status.setWrapText(true);
         var generate = new Button("Crear identidad cifrada…");
-        getChildren().addAll(generate, status);
+        var fingerprint = new FingerprintView("Huella de la identidad creada localmente; conservar para comparar");
+        getChildren().addAll(generate, status, fingerprint);
         generate.setOnAction(event -> {
             var parent = chooseParent.get(); if (parent == null) return;
+            fingerprint.setFingerprint("");
             var first = new PasswordField(); first.setAccessibleText("Nueva contraseña");
             var second = new PasswordField(); second.setAccessibleText("Repetir contraseña");
             var dialog = new Dialog<ButtonType>(); dialog.initOwner(owner); dialog.setTitle("Proteger nueva identidad");
@@ -43,8 +45,9 @@ final class IdentityPanel extends VBox {
             status.setText("Generando y cifrando… Si comienza el guardado, se completará antes de finalizar.");
             task.setOnSucceeded(e -> {
                 var identity = task.getValue(); created.accept(identity);
+                fingerprint.setFingerprint(identity.fingerprint());
                 status.setText("Identidad guardada en: " + identity.directory() + "\nClave cifrada: " + identity.encryptedKey().getFileName()
-                        + "\nClave pública: public.der\nHuella SHA-256: " + identity.fingerprint()
+                        + "\nClave pública: public.der · Conserva la huella mostrada debajo."
                         + "\nDisponible para firmar en esta sesión. Conserva carpeta y contraseña; comparte solo la clave pública y la huella.");
                 finished.run();
             });

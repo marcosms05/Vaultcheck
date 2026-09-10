@@ -17,3 +17,11 @@ El panel está plegado inicialmente para conservar el espacio de resultados. Es 
 DesktopReferenceSmoke utiliza los botones y manejadores reales de JavaFX, la firma Ed25519 y el lector nativo sobre archivos sintéticos. Solo sustituye las respuestas de los selectores y la entrada de la huella: no automatiza los diálogos del sistema.
 
 Comprueba ausencia de confianza automática, rechazo de huella incorrecta, aprobación explícita, verificación contra los bytes revisados después de modificar el archivo original, retirada de aprobación al reseleccionar la clave y bloqueo al revisar una firma manipulada. Los campos de referencia y clave tienen nombres accesibles explícitos.
+
+## Huellas utilizables y confianza local de sesión
+
+La revisión y la creación muestran la huella pública en un campo de solo lectura seleccionable con botón Copiar huella. Copiar es una acción explícita de portapapeles y nunca aprueba la identidad. Para identidades externas se pega una huella esperada obtenida por un canal independiente; guardar y cargar un TXT junto a la clave importada no prueba su origen.
+
+Si VaultCheck ha generado una identidad en esta sesión, conserva su huella en memoria. Tras verificar la firma, «Usar mi identidad de esta sesión» solo se habilita si la huella coincide exactamente con la generada. El usuario sigue aprobando explícitamente y la selección de nuevos archivos invalida la revisión. La huella no se persiste entre reinicios ni se obtiene automáticamente de la clave importada. Esta vía elimina la transcripción para el flujo local sin convertir claves externas en confiables.
+
+El tema de la barra nativa se solicita mediante DWM, conserva los controles de Windows, no modifica el registro ni ventanas de otros procesos y no aplica colores personalizados si detecta alto contraste. En Windows sin soporte conserva el marco del sistema. La documentación oficial de los atributos está en https://learn.microsoft.com/en-us/windows/win32/api/dwmapi/ne-dwmapi-dwmwindowattribute.

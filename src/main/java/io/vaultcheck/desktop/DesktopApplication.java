@@ -227,7 +227,10 @@ public final class DesktopApplication extends Application {
             cancel.setDisable(false); progress.setVisible(true); progress.setManaged(true);
             mode.setText("CREACIÓN DE IDENTIDAD · CONSULTA EL RESULTADO DEL PANEL");
             source.clear(); summary.setText("Creando una identidad local cifrada…"); worker.execute(task);
-        }, finish, createPanel::useIdentity);
+        }, finish, identity -> {
+            createPanel.useIdentity(identity);
+            referencePanel.useLocalIdentity(identity.fingerprint());
+        });
         identityPanel.disableProperty().bind(working);
         var identitySection = new TitledPane("Identidad local", identityPanel); identitySection.setExpanded(false);
         content.getChildren().add(8, identitySection);
@@ -335,6 +338,7 @@ public final class DesktopApplication extends Application {
         var screen = javafx.stage.Screen.getPrimary().getVisualBounds();
         stage.setWidth(Math.min(1280, screen.getWidth())); stage.setHeight(Math.min(940, screen.getHeight()));
         stage.show();
+        WindowsWindowTheme.apply(stage.getTitle());
     }
     private static Label label(String text, String style) {
         var label = new Label(text); if (!style.isEmpty()) label.getStyleClass().add(style); return label;
