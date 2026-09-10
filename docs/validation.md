@@ -152,3 +152,7 @@ El primer CI público ejecutó 137 pruebas y produjo ocho errores «Storage is n
 Validación local con Temurin 21: 139 pruebas satisfactorias. Nuevas comprobaciones: el padre conserva propietario/ACL y la creación de clave pública no sobrescribe contenido existente. Falta confirmar el resultado en el runner remoto administrativo. Las acciones de checkout y setup-java se actualizaron a versiones basadas en Node 24, fijadas por SHA de commit. El resumen de JUnit se publica en el resumen del trabajo.
 
 Fuente del comportamiento del propietario: https://learn.microsoft.com/en-us/windows/win32/secauthz/owner-of-a-new-object
+
+## Fixture de archivo truncado en el CI
+
+Tras corregir la propiedad en producción, el CI pasó de ocho errores a un fallo en truncatedPublishedFileNeverUnlocks: el test fabricaba el archivo mediante Files.write, con propietario administrativo predeterminado. Se corrige el fixture publicando primero una clave válida mediante el flujo real, comprobando su recuperación y truncando ese mismo archivo sin sustituirlo. Se comprueban sus permisos antes de exigir el rechazo criptográfico. La prueba de tamaño excesivo también conserva un archivo publicado con permisos válidos, evitando que un rechazo por propietario enmascare la comprobación de tamaño. No se amplían las excepciones aceptadas ni se cambia el código de producción.

@@ -45,8 +45,15 @@ class EncryptedKeyFilesTest {
     }
 
     @Test void truncatedPublishedFileNeverUnlocks() throws Exception {
-        String id = UUID.randomUUID() + ".vckey";
-        Files.write(root.resolve(id), new byte[] {1, 2, 3});
+        var identity = KeyPairGenerator.getInstance("Ed25519").generateKeyPair();
+        var stored = files.create(root, identity.getPrivate(), password);
+        String id = stored.getFileName().toString();
+        assertNotNull(files.unlock(root, id, password));
+        // Truncate the published object in place, preserving its owner and ACLs even on admin runners.
+        try (var channel = java.nio.channels.FileChannel.open(stored, java.nio.file.StandardOpenOption.WRITE)) {
+            channel.truncate(3);
+        }
+        WindowsPrivateDirectory.requirePrivateFile(stored);
         assertThrows(GeneralSecurityException.class, () -> files.unlock(root, id, password));
     }
 
@@ -56,8 +63,12 @@ class EncryptedKeyFilesTest {
         var directory = Files.createDirectory(root.resolve(id));
         assertThrows(IOException.class, () -> files.unlock(root, id, password));
         Files.delete(directory);
-        Files.write(root.resolve(id), new byte[EncryptedSigningKeyCodec.MAX_CONTAINER_BYTES + 1]);
-        assertThrows(IOException.class, () -> files.unlock(root, id, password));
+        var identity = KeyPairGenerator.getInstance("Ed25519").generateKeyPair();
+        var stored = files.create(root, identity.getPrivate(), password);
+        Files.write(stored, new byte[EncryptedSigningKeyCodec.MAX_CONTAINER_BYTES + 1],
+                java.nio.file.StandardOpenOption.WRITE, java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
+        WindowsPrivateDirectory.requirePrivateFile(stored);
+        assertThrows(IOException.class, () -> files.unlock(root, stored.getFileName().toString(), password));
     }
 
     @Test void failedEncryptionDoesNotPublishAnyFile() throws Exception {
